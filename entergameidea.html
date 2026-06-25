@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bean Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="chat-box">
+        <input type="text" id="messageInput" placeholder="Write a message...">
+        <button id="sendBtn">Send</button>
+    </div>
+
+    <div id="messagesPanel">
+        <div class="panel-header">
+            <h2>Messages</h2>
+            <button id="closeBtn">✕</button>
+        </div>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        const input = document.getElementById("messageInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const panel = document.getElementById("messagesPanel");
+        const messagesDiv = document.getElementById("messages");
+
+        let messages = JSON.parse(localStorage.getItem("beanMessages")) || [];
+
+        function saveMessages() {
+            localStorage.setItem("beanMessages", JSON.stringify(messages));
+        }
+
+        function renderMessages() {
+            messagesDiv.innerHTML = "";
+
+            messages.forEach(msg => {
+                const div = document.createElement("div");
+                div.className = "message";
+                div.textContent = msg;
+                messagesDiv.appendChild(div);
+            });
+        }
+
+        function sendMessage() {
+            const text = input.value.trim();
+
+            if (text === "") return;
+
+            messages.push(text);
+            saveMessages();
+            renderMessages();
+
+            input.value = "";
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "F2") {
+                e.preventDefault();
+                panel.classList.toggle("show");
+                renderMessages();
+            }
+        });
+
+        document.getElementById("closeBtn").onclick = () => {
+            panel.classList.remove("show");
+        };
+
+        renderMessages();
+    </script>
+
+</body>
+
+</html>

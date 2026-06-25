@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Car Racing Game</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh
+        }
+
+        .wrap {
+            text-align: center
+        }
+
+        canvas {
+            background: #333;
+            border: 3px solid white;
+            border-radius: 12px;
+            max-width: 100%;
+            height: auto
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>🚗 Car Racing</h1>
+        <div>Score: <span id="score">0</span></div>
+        <canvas id="game" width="400" height="600"></canvas><br>
+        <button onclick="restart()">🔄 Restart</button>
+    </div>
+
+    <script>
+        const c = document.getElementById("game");
+        const ctx = c.getContext("2d");
+        const scoreEl = document.getElementById("score");
+
+        let player, enemies, score, running, spawnTimer;
+
+        function start() {
+            player = { lane: 1 };
+            enemies = [];
+            score = 0;
+            running = true;
+            spawnEnemy();
+            requestAnimationFrame(loop);
+        }
+
+        function laneX(l) { return 60 + l * 120; }
+
+        function spawnEnemy() {
+            if (!running) return;
+
+            enemies.push({
+                lane: Math.floor(Math.random() * 3),
+                y: -100
+            });
+
+            spawnTimer = setTimeout(spawnEnemy, 1400);
+        }
+
+        function loop() {
+            if (!running) return;
+
+            ctx.clearRect(0, 0, 400, 600);
+
+            ctx.fillStyle = "#555";
+            ctx.fillRect(0, 0, 400, 600);
+
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(133, 0, 4, 600);
+            ctx.fillRect(266, 0, 4, 600);
+
+            ctx.font = "50px Arial";
+            ctx.fillText("🚗", laneX(player.lane), 520);
+
+            enemies.forEach(e => {
+                e.y += 5;
+
+                ctx.fillText("🚙", laneX(e.lane), e.y);
+
+                if (e.lane === player.lane && e.y > 450 && e.y < 540) {
+                    running = false;
+                    clearTimeout(spawnTimer);
+                    setTimeout(() => alert("💥 Crash! Score: " + Math.floor(score / 10)), 50);
+                }
+            });
+
+            enemies = enemies.filter(e => e.y < 700);
+
+            score++;
+            scoreEl.textContent = Math.floor(score / 10);
+
+            requestAnimationFrame(loop);
+        }
+
+        document.addEventListener("keydown", e => {
+            if (e.code === "ArrowLeft" && player.lane > 0) player.lane--;
+            if (e.code === "ArrowRight" && player.lane < 2) player.lane++;
+        });
+
+        c.addEventListener("click", e => {
+            const rect = c.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            if (x < c.width / 2 && player.lane > 0) player.lane--;
+            else if (x >= c.width / 2 && player.lane < 2) player.lane++;
+        });
+
+        function restart() {
+            clearTimeout(spawnTimer);
+            start();
+        }
+
+        start();
+    </script>
+</body>
+
+</html>

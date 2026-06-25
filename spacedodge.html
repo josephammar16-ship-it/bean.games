@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Dodge</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #020617, #0f172a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .game {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        canvas {
+            background: #000;
+            width: 100%;
+            max-width: 450px;
+            border: 3px solid #38bdf8;
+            border-radius: 15px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .controls button {
+            width: 90px;
+            height: 60px;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: #38bdf8;
+            color: white;
+            cursor: pointer;
+        }
+
+        .restart {
+            margin-top: 15px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            background: #22c55e;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="game">
+
+        <h1>🚀 Space Dodge</h1>
+
+        <div class="stats">
+            <div>Score: <span id="score">0</span></div>
+            <div>Best: <span id="best">0</span></div>
+        </div>
+
+        <canvas id="game" width="450" height="600"></canvas>
+
+        <div class="controls">
+            <button onclick="moveLeft()">⬅️</button>
+            <button onclick="moveRight()">➡️</button>
+        </div>
+
+        <button class="restart" onclick="restartGame()">
+            Restart
+        </button>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+
+        const scoreEl = document.getElementById("score");
+        const bestEl = document.getElementById("best");
+
+        let best = localStorage.getItem("spaceBest") || 0;
+        bestEl.textContent = best;
+
+        let player;
+        let meteors;
+        let score;
+        let running;
+
+        function startGame() {
+
+            player = {
+                x: 200,
+                y: 540,
+                w: 50,
+                h: 50
+            };
+
+            meteors = [];
+            score = 0;
+            running = true;
+
+            spawnMeteor();
+
+            requestAnimationFrame(update);
+        }
+
+        function spawnMeteor() {
+
+            if (!running) return;
+
+            meteors.push({
+                x: Math.random() * 400,
+                y: -50,
+                w: 40,
+                h: 40,
+                speed: 3 + Math.random() * 4
+            });
+
+            setTimeout(spawnMeteor, 700);
+        }
+
+        function drawPlayer() {
+            ctx.font = "40px Arial";
+            ctx.fillText("🚀", player.x, player.y + 40);
+        }
+
+        function drawMeteors() {
+
+            ctx.font = "35px Arial";
+
+            meteors.forEach(m => {
+                ctx.fillText("☄️", m.x, m.y);
+
+                m.y += m.speed;
+
+                if (
+                    m.x < player.x + player.w &&
+                    m.x + m.w > player.x &&
+                    m.y < player.y + player.h &&
+                    m.y + m.h > player.y
+                ) {
+                    gameOver();
+                }
+            });
+
+            meteors = meteors.filter(m => m.y < 700);
+        }
+
+        function update() {
+
+            if (!running) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            score++;
+            scoreEl.textContent = Math.floor(score / 10);
+
+            drawPlayer();
+            drawMeteors();
+
+            requestAnimationFrame(update);
+        }
+
+        function gameOver() {
+
+            running = false;
+
+            let finalScore = Math.floor(score / 10);
+
+            if (finalScore > best) {
+                best = finalScore;
+                localStorage.setItem("spaceBest", best);
+                bestEl.textContent = best;
+            }
+
+            setTimeout(() => {
+                alert("💥 Game Over!\nScore: " + finalScore);
+            }, 100);
+        }
+
+        function moveLeft() {
+            if (player.x > 10) {
+                player.x -= 35;
+            }
+        }
+
+        function moveRight() {
+            if (player.x < 390) {
+                player.x += 35;
+            }
+        }
+
+        document.addEventListener("keydown", e => {
+
+            if (e.key === "ArrowLeft") {
+                moveLeft();
+            }
+
+            if (e.key === "ArrowRight") {
+                moveRight();
+            }
+
+        });
+
+        function restartGame() {
+            startGame();
+        }
+
+        startGame();
+    </script>
+
+</body>
+
+</html>

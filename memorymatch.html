@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 20px;
+        }
+
+        .game {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            color: white;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+        }
+
+        .stats {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: #38bdf8;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            user-select: none;
+            transition: .3s;
+        }
+
+        .card.flipped {
+            background: white;
+        }
+
+        .card.matched {
+            background: #22c55e;
+            pointer-events: none;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            background: #38bdf8;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="game">
+        <h1>🧠 Memory Match</h1>
+
+        <div class="stats">
+            Moves: <span id="moves">0</span>
+        </div>
+
+        <div class="grid" id="grid"></div>
+
+        <button onclick="startGame()">Restart</button>
+    </div>
+
+    <script>
+        const emojis = ["🍎", "🍎", "🚀", "🚀", "🎮", "🎮", "🐱", "🐱", "⚽", "⚽", "🔥", "🔥", "🎵", "🎵", "⭐", "⭐"];
+
+        const grid = document.getElementById("grid");
+        const movesEl = document.getElementById("moves");
+
+        let firstCard = null;
+        let secondCard = null;
+        let lock = false;
+        let moves = 0;
+
+        function shuffle(arr) {
+            return arr.sort(() => Math.random() - 0.5);
+        }
+
+        function startGame() {
+            grid.innerHTML = "";
+            moves = 0;
+            movesEl.textContent = moves;
+
+            let cards = shuffle([...emojis]);
+
+            cards.forEach(emoji => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.dataset.emoji = emoji;
+                card.textContent = "?";
+
+                card.addEventListener("click", () => flipCard(card));
+
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+
+            if (lock) return;
+            if (card.classList.contains("flipped")) return;
+
+            card.classList.add("flipped");
+            card.textContent = card.dataset.emoji;
+
+            if (!firstCard) {
+                firstCard = card;
+                return;
+            }
+
+            secondCard = card;
+            moves++;
+            movesEl.textContent = moves;
+
+            if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+
+                firstCard.classList.add("matched");
+                secondCard.classList.add("matched");
+
+                firstCard = null;
+                secondCard = null;
+
+                checkWin();
+
+            } else {
+
+                lock = true;
+
+                setTimeout(() => {
+                    firstCard.classList.remove("flipped");
+                    secondCard.classList.remove("flipped");
+
+                    firstCard.textContent = "?";
+                    secondCard.textContent = "?";
+
+                    firstCard = null;
+                    secondCard = null;
+                    lock = false;
+                }, 800);
+
+            }
+        }
+
+        function checkWin() {
+            const matched = document.querySelectorAll(".matched");
+
+            if (matched.length === 16) {
+                setTimeout(() => {
+                    alert("🎉 You Win!");
+                }, 300);
+            }
+        }
+
+        startGame();
+    </script>
+
+</body>
+
+</html>

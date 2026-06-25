@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors Ultimate</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 20px;
+            color: white;
+        }
+
+        .game {
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            background: rgba(255, 255, 255, .05);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 25px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .choices {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .choice {
+            width: 120px;
+            height: 120px;
+            border: none;
+            border-radius: 20px;
+            font-size: 3rem;
+            cursor: pointer;
+            background: #38bdf8;
+            transition: .25s;
+        }
+
+        .choice:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .battle {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 30px 0;
+            font-size: 4rem;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .player-box,
+        .cpu-box {
+            background: rgba(255, 255, 255, .08);
+            padding: 20px;
+            border-radius: 20px;
+            min-width: 150px;
+        }
+
+        .result {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 20px;
+            min-height: 40px;
+        }
+
+        .restart {
+            margin-top: 20px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            background: #22c55e;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        @media(max-width:600px) {
+            .choice {
+                width: 90px;
+                height: 90px;
+                font-size: 2.5rem;
+            }
+
+            .battle {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="game">
+
+        <h1>✊ Rock Paper Scissors ✋</h1>
+
+        <div class="scoreboard">
+            <div>👤 You: <span id="playerScore">0</span></div>
+            <div>🤖 CPU: <span id="cpuScore">0</span></div>
+            <div>🏆 Best: <span id="bestScore">0</span></div>
+        </div>
+
+        <div class="choices">
+            <button class="choice" onclick="play('rock')">✊</button>
+            <button class="choice" onclick="play('paper')">✋</button>
+            <button class="choice" onclick="play('scissors')">✌️</button>
+        </div>
+
+        <div class="battle">
+
+            <div class="player-box">
+                <div>You</div>
+                <div id="playerChoice">❔</div>
+            </div>
+
+            <div style="font-size:2rem;">VS</div>
+
+            <div class="cpu-box">
+                <div>CPU</div>
+                <div id="cpuChoice">❔</div>
+            </div>
+
+        </div>
+
+        <div class="result" id="result">
+            Choose your move!
+        </div>
+
+        <button class="restart" onclick="resetGame()">
+            Reset
+        </button>
+
+    </div>
+
+    <script>
+        const playerScoreEl = document.getElementById("playerScore");
+        const cpuScoreEl = document.getElementById("cpuScore");
+        const bestScoreEl = document.getElementById("bestScore");
+
+        const playerChoiceEl = document.getElementById("playerChoice");
+        const cpuChoiceEl = document.getElementById("cpuChoice");
+        const resultEl = document.getElementById("result");
+
+        let playerScore = 0;
+        let cpuScore = 0;
+
+        let best = localStorage.getItem("rpsBest") || 0;
+        bestScoreEl.textContent = best;
+
+        const emojis = {
+            rock: "✊",
+            paper: "✋",
+            scissors: "✌️"
+        };
+
+        function play(player) {
+
+            const choices = ["rock", "paper", "scissors"];
+            const cpu = choices[Math.floor(Math.random() * 3)];
+
+            playerChoiceEl.textContent = emojis[player];
+            cpuChoiceEl.textContent = emojis[cpu];
+
+            if (player === cpu) {
+                resultEl.textContent = "🤝 Draw!";
+                return;
+            }
+
+            let win =
+                (player === "rock" && cpu === "scissors") ||
+                (player === "paper" && cpu === "rock") ||
+                (player === "scissors" && cpu === "paper");
+
+            if (win) {
+
+                playerScore++;
+                playerScoreEl.textContent = playerScore;
+
+                resultEl.textContent = "🎉 You Win!";
+
+                if (playerScore > best) {
+                    best = playerScore;
+                    localStorage.setItem("rpsBest", best);
+                    bestScoreEl.textContent = best;
+                }
+
+            } else {
+
+                cpuScore++;
+                cpuScoreEl.textContent = cpuScore;
+
+                resultEl.textContent = "💀 CPU Wins!";
+            }
+        }
+
+        function resetGame() {
+
+            playerScore = 0;
+            cpuScore = 0;
+
+            playerScoreEl.textContent = 0;
+            cpuScoreEl.textContent = 0;
+
+            playerChoiceEl.textContent = "❔";
+            cpuChoiceEl.textContent = "❔";
+
+            resultEl.textContent = "Choose your move!";
+        }
+    </script>
+
+</body>
+
+</html>

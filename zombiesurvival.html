@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Zombie Survival</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh
+        }
+
+        .wrap {
+            text-align: center
+        }
+
+        canvas {
+            background: #1b1b1b;
+            border: 3px solid #fff;
+            border-radius: 12px;
+            max-width: 100%;
+            height: auto
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>🧟 Zombie Survival</h1>
+        <div>Score: <span id="score">0</span></div>
+        <canvas id="game" width="800" height="500"></canvas><br>
+        <button onclick="restart()">🔄 Restart</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        const scoreEl = document.getElementById("score");
+
+        let player, zombies, bullets, score, running, spawnTimer;
+
+        function start() {
+            player = { x: 400, y: 250, speed: 5 };
+            zombies = [];
+            bullets = [];
+            score = 0;
+            running = true;
+            spawnZombie();
+            requestAnimationFrame(loop);
+        }
+
+        function spawnZombie() {
+            if (!running) return;
+
+            zombies.push({
+                x: Math.random() * 800,
+                y: -50
+            });
+
+            spawnTimer = setTimeout(spawnZombie, 1200);
+        }
+
+        function shoot() {
+            bullets.push({
+                x: player.x,
+                y: player.y
+            });
+        }
+
+        let keys = {};
+
+        document.addEventListener("keydown", e => {
+            keys[e.code] = true;
+            if (e.code === "Space") shoot();
+        });
+
+        document.addEventListener("keyup", e => {
+            keys[e.code] = false;
+        });
+
+        function loop() {
+            if (!running) return;
+
+            ctx.clearRect(0, 0, 800, 500);
+
+            if (keys["KeyW"]) player.y -= player.speed;
+            if (keys["KeyS"]) player.y += player.speed;
+            if (keys["KeyA"]) player.x -= player.speed;
+            if (keys["KeyD"]) player.x += player.speed;
+
+            ctx.font = "35px Arial";
+            ctx.fillText("😎", player.x, player.y);
+
+            bullets.forEach(b => {
+                b.y -= 10;
+                ctx.fillText("🔸", b.x, b.y);
+            });
+
+            zombies.forEach(z => {
+
+                const dx = player.x - z.x;
+                const dy = player.y - z.y;
+
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                z.x += dx / dist * 1.2;
+                z.y += dy / dist * 1.2;
+
+                ctx.fillText("🧟", z.x, z.y);
+
+                if (dist < 25) {
+                    running = false;
+                    clearTimeout(spawnTimer);
+                    setTimeout(() => alert("💀 Game Over! Score: " + score), 50);
+                }
+            });
+
+            bullets.forEach((b, bi) => {
+                zombies.forEach((z, zi) => {
+                    if (Math.abs(b.x - z.x) < 25 && Math.abs(b.y - z.y) < 25) {
+                        bullets.splice(bi, 1);
+                        zombies.splice(zi, 1);
+                        score += 10;
+                        scoreEl.textContent = score;
+                    }
+                });
+            });
+
+            requestAnimationFrame(loop);
+        }
+
+        canvas.addEventListener("click", shoot);
+
+        function restart() {
+            clearTimeout(spawnTimer);
+            start();
+        }
+
+        start();
+    </script>
+</body>
+
+</html>

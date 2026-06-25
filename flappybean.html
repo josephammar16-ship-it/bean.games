@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bean</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 20px;
+            color: #fff
+        }
+
+        .game {
+            width: 100%;
+            max-width: 520px;
+            text-align: center
+        }
+
+        h1 {
+            margin-bottom: 10px
+        }
+
+        .score {
+            margin-bottom: 10px;
+            font-size: 1.2rem
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 480px;
+            height: auto;
+            display: block;
+            margin: auto;
+            background: linear-gradient(#38bdf8, #dbeafe);
+            border: 3px solid #fff;
+            border-radius: 16px
+        }
+
+        .info {
+            margin-top: 10px;
+            opacity: .85
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: white
+        }
+
+        .restart {
+            background: #22c55e
+        }
+
+        .jump {
+            background: #3b82f6
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game">
+        <h1>🐦 Flappy Bean</h1>
+        <div class="score">Score: <span id="score">0</span> | Best: <span id="best">0</span></div>
+        <canvas id="game" width="480" height="650"></canvas>
+        <div class="info">Space / W / ↑ / Tap Screen</div>
+        <div class="buttons">
+            <button class="restart" onclick="restartGame()">🔄 Restart Game</button>
+            <button class="jump" onclick="flap()">⬆️ Jump</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        canvas.setAttribute("tabindex", "0");
+
+        const scoreEl = document.getElementById("score");
+        const bestEl = document.getElementById("best");
+
+        let best = localStorage.getItem("flappyBeanBest") || 0;
+        bestEl.textContent = best;
+
+        let bird, pipes, score, gameOver, animationId, pipeSpawner;
+
+        function startGame() {
+            cancelAnimationFrame(animationId);
+            clearTimeout(pipeSpawner);
+
+            canvas.focus();
+
+            bird = { x: 120, y: 300, velocity: 0, radius: 18 };
+            pipes = [];
+            score = 0;
+            gameOver = false;
+            scoreEl.textContent = 0;
+
+            createPipe();
+            animationId = requestAnimationFrame(update);
+        }
+
+        function createPipe() {
+            if (gameOver) return;
+
+            const gap = 300;
+            const topHeight = Math.random() * 140 + 70;
+
+            pipes.push({
+                x: canvas.width,
+                width: 70,
+                top: topHeight,
+                bottom: topHeight + gap,
+                passed: false
+            });
+
+            pipeSpawner = setTimeout(createPipe, 2800);
+        }
+
+        function drawBird() {
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#f59e0b";
+            ctx.fill();
+            ctx.font = "18px Arial";
+            ctx.fillText("🐦", bird.x - 12, bird.y + 6);
+        }
+
+        function drawPipes() {
+            pipes.forEach(pipe => {
+                pipe.x -= 1.5;
+
+                ctx.fillStyle = "#22c55e";
+                ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+                ctx.fillRect(pipe.x, pipe.bottom, pipe.width, canvas.height - pipe.bottom);
+
+                if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+                    pipe.passed = true;
+                    score++;
+                    scoreEl.textContent = score;
+
+                    if (score > best) {
+                        best = score;
+                        localStorage.setItem("flappyBeanBest", best);
+                        bestEl.textContent = best;
+                    }
+                }
+
+                const hit = bird.x + bird.radius > pipe.x &&
+                    bird.x - bird.radius < pipe.x + pipe.width &&
+                    (bird.y - bird.radius < pipe.top || bird.y + bird.radius > pipe.bottom);
+
+                if (hit) endGame();
+            });
+
+            pipes = pipes.filter(p => p.x > -100);
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            bird.velocity += 0.08;
+            bird.y += bird.velocity;
+
+            drawBird();
+            drawPipes();
+
+            if (bird.y - bird.radius < 0 || bird.y + bird.radius > canvas.height) {
+                endGame();
+                return;
+            }
+
+            animationId = requestAnimationFrame(update);
+        }
+
+        function flap() {
+            if (gameOver) return;
+            bird.velocity = -6;
+        }
+
+        function endGame() {
+            gameOver = true;
+            cancelAnimationFrame(animationId);
+            clearTimeout(pipeSpawner);
+
+            setTimeout(() => {
+                alert("Game Over! Score: " + score);
+            }, 100);
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        document.addEventListener("keydown", e => {
+            if (
+                e.code === "Space" ||
+                e.code === "ArrowUp" ||
+                e.code === "KeyW" ||
+                e.key === " "
+            ) {
+                e.preventDefault();
+                flap();
+            }
+        });
+
+        canvas.addEventListener("click", flap);
+        canvas.addEventListener("touchstart", e => {
+            e.preventDefault();
+            flap();
+        });
+
+        startGame();
+    </script>
+</body>
+
+</html>
